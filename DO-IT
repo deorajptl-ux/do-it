@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# Installs the ExamMode native plugin into the generated Android / iOS project.
+set -e
+cd "$(dirname "$0")/.."
+if [ "$1" = "android" ]; then
+  D=android/app/src/main/java/com/mocktesthub/app
+  mkdir -p "$D"
+  cp native/android/ExamModePlugin.java "$D/ExamModePlugin.java"
+  cat > "$D/MainActivity.java" <<'J'
+package com.mocktesthub.app;
+
+import android.os.Bundle;
+import com.getcapacitor.BridgeActivity;
+
+public class MainActivity extends BridgeActivity {
+    @Override
+    public void onCreate(Bundle savedInstanceState) {
+        registerPlugin(ExamModePlugin.class);
+        super.onCreate(savedInstanceState);
+    }
+}
+J
+  M=android/app/src/main/AndroidManifest.xml
+  grep -q ACCESS_NOTIFICATION_POLICY "$M" || sed -i 's|<application|<uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />\n    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />\n    <application|' "$M"
+  echo "Android plugin installed. Run: npm run android"
+elif [ "$1" = "ios" ]; then
+  cp native/ios/ExamModePlugin.swift ios/App/App/ExamModePlugin.swift
+  echo "iOS plugin copied."
+fi
+  
